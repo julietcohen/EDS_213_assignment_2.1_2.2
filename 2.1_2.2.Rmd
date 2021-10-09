@@ -1,0 +1,200 @@
+---
+title: "2.1_2.2"
+author: "Juliet"
+date: "10/8/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# dataRetrieval Package
+
+This package helps retrieve USGS data directly from their website.
+
+- They use unique ID's for each streamgage, which are 8-15 digits depending on if they are surface-water sites or groundwater sites.
+- They use 5-digit parameter codes that specifies the measured parameter beig requested, but not every station measures all parameters
+
+00060 = discharge 
+00065 = gage height
+00010 = temperature
+00045 = precip
+00400 = pH
+
+- USGS stores daily values as statistical summaries of continuous data that is collected at time intervals such as every 15 minutes or hourly, and these stats are specified by a 5-digit code
+
+00001 = max
+00002 = min
+00003 = mean
+00008 = median
+
+## Discharge time series for the Ventura River from 2019-10-01 ro 2020-10-05 using an API
+
+```{r}
+library(dataRetrieval)
+library(tidyverse)
+
+siteNumber <- "11118500"
+parameterCd <- "00060" 
+startDate <- "2019-10-01"
+endDate <- "2020-10-05"
+
+discharge <- readNWISdv(siteNumber, parameterCd, startDate, endDate)
+discharge
+
+#date <- startDate:endDate
+
+water_plot <- ggplot(data = discharge, aes(x = Date, y = X_00060_00003)) +
+  geom_point()
+```
+
+```{r}
+siteNumber <- "01491000"
+parameterCd <- c("00010","00060")  # Temperature and discharge
+statCd <- c("00001","00003")  # Mean and maximum
+startDate <- "2012-01-01"
+endDate <- "2012-05-01"
+
+temperatureAndFlow <- readNWISdv(siteNumber, parameterCd, 
+        startDate, endDate, statCd=statCd)
+
+temperatureAndFlow <- renameNWISColumns(temperatureAndFlow)
+names(temperatureAndFlow)
+
+statInfo <- attr(temperatureAndFlow, "statisticInfo")
+variableInfo <- attr(temperatureAndFlow, "variableInfo")
+siteInfo <- attr(temperatureAndFlow, "siteInfo")
+
+par(mar=c(5,5,5,5)) #sets the size of the plot window
+
+plot(temperatureAndFlow$Date, temperatureAndFlow$Wtemp_Max,
+  ylab=variableInfo$parameter_desc[1],xlab="" )
+par(new=TRUE)
+plot(temperatureAndFlow$Date, temperatureAndFlow$Flow,
+  col="red",type="l",xaxt="n",yaxt="n",xlab="",ylab="",axes=FALSE
+  )
+axis(4,col="red",col.axis="red")
+mtext(variableInfo$parameter_desc[2],side=4,line=3,col="red")
+title(paste(siteInfo$station_nm,"2012"))
+#legend("topleft", legend, variableInfo$param_units, 
+#       col=c("black","red"),lty=c(NA,1),pch=c(1,NA))
+```
+
+## 1. Add the Santa Paula Creek gauge
+
+```{r}
+siteNumber <- "11113500"
+parameterCd <- "00060" 
+startDate <- "2019-10-01"
+endDate <- "2020-10-05"
+
+discharge <- readNWISdv(siteNumber, parameterCd, startDate, endDate)
+#discharge
+
+#date <- startDate:endDate
+
+water_plot <- ggplot(data = discharge, aes(x = Date, y = X_00060_00003)) +
+  geom_point()
+```
+
+## 2. The best way to query multiple sites using this R package is to use the readNWIds() function and set the argument siteNumber equal to a concatonated list of multiple sites. Then the dataframe that is output has data from both sites in the column site_no. The following code retreives data from the Ventura and Santa Paula sites. 
+
+```{r}
+# set the siteNumber equal to 2 sites so you can get both sites' data in one dataframe
+
+siteNumber <- c("11113500", "11118500")
+parameterCd <- "00060" 
+startDate <- "2019-10-01"
+endDate <- "2020-10-05"
+
+discharge_ven_sp_2019_2020 <- readNWISdv(siteNumber, parameterCd, startDate, endDate)
+discharge_ven_sp_2019_2020
+
+colnames(discharge_ven_sp_2019_2020)
+
+#check the class of the output
+class(discharge_ven_sp_2019_2020)
+
+unique(discharge_ven_sp$site_no)
+
+discharge_ven_sp_2019_2020_plot <- ggplot(discharge_ven_sp_2019_2020, aes(x = Date, y = X_00060_00003))+
+  geom_line() +
+  labs(title = "Ventura & Santa Paula Discharge 2019-2020",
+       x = "Date",
+       y = "Water Discharge (ft^3/s)")
+
+discharge_ven_sp_2019_2020_plot
+```
+## 3. The following is a plot showing the stream flow response to the rain on 10/04. 
+
+Determine at what time did the stream flow peaked (if any) at the two locations?
+
+```{r}
+siteNumber <- c("11113500", "11118500")
+parameterCd <- "00060" 
+startDate <- "2021-10-03"
+endDate <- "2021-10-05"
+
+discharge_ven_sp_storm <- readNWISdv(siteNumber, parameterCd, startDate, endDate)
+#discharge_ven_sp
+
+colnames(discharge_ven_sp_storm)
+
+storm_discharge_storm_plot <- ggplot(data = discharge_ven_sp_storm, aes(x = Date, y = X_00060_00003)) +
+  geom_line(aes(color = site_no)) +
+  labs(title = "Water Discharge from Ventura and Santa Paula gages",
+      x = "Date",
+      y = "Water Discharge (ft^3/s") +
+ scale_color_discrete(name = "Site", labels = c("Santa Paula", "Ventura"))
+
+# need to figure out how to get 15-min intervals
+
+storm_discharge_storm_plot
+```
+
+
+--------------------------------------------------------------------------
+
+Metajam
+
+```{r}
+# metajam helps you access the data and the metadata, supports multiple repositories
+# when you cite the data, cite the package rather than just the csv or other data document, you include all metadata in your citation this way
+# import the data into its own chunk and set eval = FALSE so it doesnt run every time you knit
+
+# set inputs
+#data_obj <- "https://arcticdata.io/metacat/d1/mn/v2/object/urn%3Auuid%3A9e123f84-ce0d-4094-b898-c9e73680eafa"
+#path <- "Users\julie\OneDrive\Documents\MEDS - My Website & misc\EDS_213_Metadata_Standards_Data_Modeling_Data_Semantics\week_2\activity_arctic"
+# download data and metadata
+library(metajam)
+#download_d1_data(data_obj, path)
+# Returned
+#[1] "~/Desktop/doi_10.18739_A2DP3X__Alaska_Schools_Rentention2009_15"
+
+library(here)
+data <- read.csv(here("Alaska_Schools_Rentention2009_15.csv"))
+
+```
+
+
+```{r, eval = FALSE}
+data_url <- "https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A7fc6f6db-c5ea-426a-a743-1f2edafb43b8"
+
+data_path <- download_d1_data(data_url, here())
+# telling R to download the folder of data and metadata from a URL and then put the folder here()
+
+# when you call the data, you only need to reference the folder with all the files within it, R knows which files are metadata and which are the dataframes
+
+# in order to knit this document, we need to set the data_path to here("insert_data_folder_name")
+
+```
+
+```{r}
+data <- read_d1_files(data_path)
+
+# get the dataframe
+
+hh_data <- data$data
+hh_data
+```
