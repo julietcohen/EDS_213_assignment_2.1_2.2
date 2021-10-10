@@ -138,8 +138,9 @@ parameterCd <- "00060"
 startDate <- "2021-10-03"
 endDate <- "2021-10-05"
 
+# get data for daily summary data at each site during the storm
+
 discharge_ven_sp_storm <- readNWISdv(siteNumber, parameterCd, startDate, endDate)
-#discharge_ven_sp
 
 colnames(discharge_ven_sp_storm)
 
@@ -154,11 +155,9 @@ storm_discharge_plot_daily_summary
 ```
 
 ```{r}
-# need to figure out how to get 15-min intervals
 
-# example: instFlow <- readNWISdata(sites="05114000", service="iv", 
-#                   parameterCd="00060", 
-#                   startDate="2014-05-01T00:00Z",endDate="2014-05-01T12:00Z")
+# get data for 15-min intervals at each site during the storm
+
 short_interval_data <- readNWISdata(sites = c("11113500", "11118500"), service = "iv", parameterCD = "00060", startDate = "2021-10-03T00:00Z", endDate = "2021-10-05T00:00Z")
 
 colnames(short_interval_data)
@@ -167,14 +166,48 @@ storm_discharge_plot_short_intervals <- ggplot(data = short_interval_data, aes(x
   geom_line(aes(color = site_no)) +
   labs(title = "Water Discharge from Ventura and Santa Paula gages at 15 min intervals",
       x = "Date & Time",
-      y = "Water Discharge (ft^3/s") +
+      y = "Water Discharge (ft^3/s)") +
  scale_color_discrete(name = "Site", labels = c("Santa Paula", "Ventura"))
 
 storm_discharge_plot_short_intervals
+
+# find the peak discharge, filter the dataset with discharge data from each site
+
+# SP
+
+SP_storm_discharge <- short_interval_data %>% 
+  filter(site_no == 11113500)
+
+max(SP_storm_discharge$X_00060_00000)
+
+# Ven
+
+Ven_storm_discharge <- short_interval_data %>% 
+  filter(site_no == 11118500)
+
+max(Ven_storm_discharge$X_00060_00000)
+
+# find the time at which that discharge occurred at each site by filtering
+
+# SP
+
+SP_storm_time <- short_interval_data %>% 
+  filter(site_no == 11113500,
+         X_00060_00000 == 0.44)
+
+SP_storm_time
+  
+# Ven
+
+Ven_storm_time <- short_interval_data %>% 
+  filter(site_no == 11118500,
+         X_00060_00000 == 1.07)
+
+Ven_storm_time
 ```
 
 
-The stream flow peaked at __ time at Ventura and __ at Santa Paula.
+At Ventura, the stream flow peaked on 2021-10-03 at 14:10:00-15:45:00, the maximum flow was 1.07 ft^3/s. At Santa Paula, the stream flow did not peak at one unique value or date time, but the maximum flow during this time range was 0.44 ft^3/s, and this peak occurred on 2021-10-03 at 17:15:00 as well as 2021-10-04 at 11:45:00-15:15:00.
 
 ## 2.2: Metajam
 
