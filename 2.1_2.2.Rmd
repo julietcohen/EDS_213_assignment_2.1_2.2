@@ -80,8 +80,9 @@ title(paste(siteInfo$station_nm,"2012"))
 #legend("topleft", legend, variableInfo$param_units, 
 #       col=c("black","red"),lty=c(NA,1),pch=c(1,NA))
 ```
+## 2.1: USGS Stream Data
 
-## 1. Add the Santa Paula Creek gauge
+### 1. Add the Santa Paula Creek gauge
 
 ```{r}
 siteNumber <- "11113500"
@@ -98,7 +99,7 @@ water_plot <- ggplot(data = discharge, aes(x = Date, y = X_00060_00003)) +
   geom_point()
 ```
 
-## 2. The best way to query multiple sites using this R package is to use the readNWIds() function and set the argument siteNumber equal to a concatonated list of multiple sites. Then the dataframe that is output has data from both sites in the column site_no. The following code retreives data from the Ventura and Santa Paula sites. 
+### 2. The best way to query multiple sites using this R package is to use the readNWIds() function and set the argument siteNumber equal to a concatonated list of multiple sites. Then the dataframe that is output has data from both sites in the column site_no. The following code retreives data from the Ventura and Santa Paula sites. 
 
 ```{r}
 # set the siteNumber equal to 2 sites so you can get both sites' data in one dataframe
@@ -126,7 +127,8 @@ discharge_ven_sp_2019_2020_plot <- ggplot(discharge_ven_sp_2019_2020, aes(x = Da
 
 discharge_ven_sp_2019_2020_plot
 ```
-## 3. The following is a plot showing the stream flow response to the rain on 10/04. 
+
+### 3. The following is a plot showing the stream flow response to the rain on 10/04. 
 
 Determine at what time did the stream flow peaked (if any) at the two locations?
 
@@ -141,39 +143,58 @@ discharge_ven_sp_storm <- readNWISdv(siteNumber, parameterCd, startDate, endDate
 
 colnames(discharge_ven_sp_storm)
 
-storm_discharge_storm_plot <- ggplot(data = discharge_ven_sp_storm, aes(x = Date, y = X_00060_00003)) +
+storm_discharge_plot_daily_summary <- ggplot(data = discharge_ven_sp_storm, aes(x = Date, y = X_00060_00003)) +
   geom_line(aes(color = site_no)) +
-  labs(title = "Water Discharge from Ventura and Santa Paula gages",
+  labs(title = "Water Discharge from Ventura and Santa Paula gages daily summary values",
       x = "Date",
       y = "Water Discharge (ft^3/s") +
  scale_color_discrete(name = "Site", labels = c("Santa Paula", "Ventura"))
 
+storm_discharge_plot_daily_summary
+```
+
+```{r}
 # need to figure out how to get 15-min intervals
 
-storm_discharge_storm_plot
+# example: instFlow <- readNWISdata(sites="05114000", service="iv", 
+#                   parameterCd="00060", 
+#                   startDate="2014-05-01T00:00Z",endDate="2014-05-01T12:00Z")
+short_interval_data <- readNWISdata(sites = c("11113500", "11118500"), service = "iv", parameterCD = "00060", startDate = "2021-10-03T00:00Z", endDate = "2021-10-05T00:00Z")
+
+colnames(short_interval_data)
+
+storm_discharge_plot_short_intervals <- ggplot(data = short_interval_data, aes(x = dateTime, y = X_00060_00000)) +
+  geom_line(aes(color = site_no)) +
+  labs(title = "Water Discharge from Ventura and Santa Paula gages at 15 min intervals",
+      x = "Date & Time",
+      y = "Water Discharge (ft^3/s") +
+ scale_color_discrete(name = "Site", labels = c("Santa Paula", "Ventura"))
+
+storm_discharge_plot_short_intervals
 ```
 
 
---------------------------------------------------------------------------
+The stream flow peaked at __ time at Ventura and __ at Santa Paula.
 
-Metajam
+## 2.2: Metajam
 
-```{r}
+```{r, eval = FALSE}
+library(metajam)
 # metajam helps you access the data and the metadata, supports multiple repositories
 # when you cite the data, cite the package rather than just the csv or other data document, you include all metadata in your citation this way
 # import the data into its own chunk and set eval = FALSE so it doesnt run every time you knit
 
 # set inputs
-#data_obj <- "https://arcticdata.io/metacat/d1/mn/v2/object/urn%3Auuid%3A9e123f84-ce0d-4094-b898-c9e73680eafa"
-#path <- "Users\julie\OneDrive\Documents\MEDS - My Website & misc\EDS_213_Metadata_Standards_Data_Modeling_Data_Semantics\week_2\activity_arctic"
+data_obj <- "https://arcticdata.io/metacat/d1/mn/v2/object/urn%3Auuid%3A9e123f84-ce0d-4094-b898-c9e73680eafa"
+path <- "C:/Users/julie/OneDrive/Documents/MEDS - My Website & misc/EDS_213_Metadata_Standards_Data_Modeling_Data_Semantics/week_2/assignments_2.1_2.2/EDS_213_assignment_2.1_2.2/data"
+  
 # download data and metadata
-library(metajam)
-#download_d1_data(data_obj, path)
-# Returned
-#[1] "~/Desktop/doi_10.18739_A2DP3X__Alaska_Schools_Rentention2009_15"
 
-library(here)
-data <- read.csv(here("Alaska_Schools_Rentention2009_15.csv"))
+download_d1_data(data_obj, path)
+
+# rename data file
+
+arctic_data <- "doi_10.18739_A2RV0D11H__Alaska_Schools_Rentention2009_15__csv"
 
 ```
 
