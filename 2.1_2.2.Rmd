@@ -119,7 +119,7 @@ water_plot_sp
 ```
 
 
-### 2. The best way to query multiple sites using this R package is to use the readNWIds() function and set the argument siteNumber equal to a concatonated list of multiple sites. Then the dataframe that is output has data from both sites in the column site_no. The following code retreives data from the Ventura and Santa Paula sites. 
+### 2. The best way to query multiple sites using this R package is to set the argument siteNumber equal to a concatenated list of multiple sites. Then the dataframe that is output has data from both sites in the column site_no. The following code retreives data from both the Ventura and Santa Paula sites. 
 
 ```{r}
 # set the siteNumber equal to 2 sites so you can get both sites' data in one dataframe
@@ -150,7 +150,7 @@ discharge_ven_sp_2019_2020_plot
 
 ### 3. Let's plot the stream flow response to the rain on 10/04, first as daily averages and then with data taken at 15-minute intervals.
 
-Let's determine at what time the stream flow peaked (if any) at the two locations.
+### Let's determine at what time the stream flow peaked (if any) at the two locations.
 
 ```{r}
 siteNumber <- c("11113500", "11118500")
@@ -179,7 +179,7 @@ storm_discharge_plot_daily_summary
 
 # get data for 15-min intervals at each site during the storm
 
-short_interval_data <- readNWISdata(sites = c("11113500", "11118500"), service = "iv", parameterCD = "00060", startDate = "2021-10-04T00:00Z", endDate = "2021-10-06T00:00Z")
+short_interval_data <- readNWISdata(sites = c("11113500", "11118500"), service = "iv", parameterCD = "00060", startDate = "2021-10-04T00:00Z", endDate = "2021-10-06T00:00Z", tz = "America/Los_Angeles")
 
 #colnames(short_interval_data)
 
@@ -228,7 +228,8 @@ Ven_storm_time <- short_interval_data %>%
 #Ven_storm_time
 ```
 
-At Ventura, the stream flow peaked on 2021-10-05 at 7:25, the maximum flow was 1.08 ft^3/s. Ventura peaked for a longer time than Santa Paula. At Santa Paula, the stream flow peaked starting at 10:30 on 2021-10-05 and its peak value was 0.7 ft^3/s.
+### At Ventura, the stream flow peaked on 2021-10-05 at 00:25:00-10:25:00, and the maximum flow was 1.08 ft^3/s. Ventura peaked for a longer time than Santa Paula. At Santa Paula, the stream flow peaked at 3:30:00 - 4:15:00 on 2021-10-05 and its peak value was 0.7 ft^3/s.
+
 
 # Assignment 2.2: Metajam
 
